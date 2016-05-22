@@ -6,7 +6,7 @@
 #include "ppu_tables.h"
 
 // Instruction entry
-#define INSTRUCTION(name) { ENTRY_INSTRUCTION, nullptr, #name, &Analyzer::name, &Recompiler::name }
+#define INSTRUCTION(name) { ENTRY_INSTRUCTION, nullptr, #name, &Analyzer::name, &Translator::name }
 
 // Table entry
 #define TABLE(caller) { ENTRY_TABLE, caller, nullptr, nullptr, nullptr }
@@ -499,24 +499,21 @@ static const struct table63_ext_t : Table<0x400> {
 /**
  * Return entries from tables
  */
-const Entry& get_entry(Instruction code)
-{
+const Entry& get_entry(Instruction code) {
     if (tablePrimary[code.opcode].type == ENTRY_TABLE) {
         return tablePrimary[code.opcode].caller(code);
     }
     return tablePrimary[code.opcode];
 }
 
-const Entry& get_table4(Instruction code)
-{
+const Entry& get_table4(Instruction code) {
     if (table4[code.op4].type == ENTRY_INVALID) {
         return get_table4_(code);
     }
     return table4[code.op4];
 }
 
-const Entry& get_table63(Instruction code)
-{
+const Entry& get_table63(Instruction code) {
     if (table63[code.op63].type == ENTRY_INVALID) {
         return get_table63_(code);
     }

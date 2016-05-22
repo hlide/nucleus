@@ -33,6 +33,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_fs.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_gamepad.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_hid.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_lwcond.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_lwmutex.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_memory.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_mmapper.h" />
@@ -42,6 +43,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_prx.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_rsx.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_semaphore.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_spu.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_ss.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_synchronization.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_time.h" />
@@ -76,6 +78,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_fs.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_gamepad.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_hid.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_lwcond.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_lwmutex.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_memory.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_mmapper.cpp" />
@@ -85,6 +88,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_prx.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_rsx.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_semaphore.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_spu.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_ss.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_time.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)scei\cellos\lv2\sys_timer.cpp" />

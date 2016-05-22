@@ -16,6 +16,7 @@
 #include "lv2/sys_fs.h"
 #include "lv2/sys_gamepad.h"
 #include "lv2/sys_hid.h"
+#include "lv2/sys_lwcond.h"
 #include "lv2/sys_lwmutex.h"
 #include "lv2/sys_memory.h"
 #include "lv2/sys_mmapper.h"
@@ -26,9 +27,12 @@
 #include "lv2/sys_rsx.h"
 #include "lv2/sys_semaphore.h"
 #include "lv2/sys_ss.h"
+#include "lv2/sys_spu.h"
 #include "lv2/sys_time.h"
 #include "lv2/sys_timer.h"
 #include "lv2/sys_tty.h"
+
+#include <cstring>
 
 #define SYSCALL(name, flags) { wrap(name), #name, flags }
 
@@ -36,9 +40,11 @@ namespace sys {
 
 LV2::LV2(std::shared_ptr<mem::Memory> memory, U32 fw_type) : memory(std::move(memory)), modules(this) {
     // Initialize syscall table
+    memset(syscalls, 0, sizeof(syscalls));
     if (fw_type & (LV2_CEX | LV2_DEX | LV2_DECR)) {
         syscalls[0x001] = SYSCALL(sys_process_getpid, LV2_NONE);
         syscalls[0x003] = SYSCALL(sys_process_exit, LV2_NONE);
+        syscalls[0x00E] = SYSCALL(sys_process_is_spu_lock_line_reservation_address, LV2_NONE);
         syscalls[0x012] = SYSCALL(sys_process_getppid, LV2_NONE);
         syscalls[0x016] = SYSCALL(sys_process_exit, LV2_NONE);
         syscalls[0x019] = SYSCALL(sys_process_get_sdk_version, LV2_NONE);
@@ -75,7 +81,12 @@ LV2::LV2(std::shared_ptr<mem::Memory> memory, U32 fw_type) : memory(std::move(me
         syscalls[0x06C] = SYSCALL(sys_cond_signal, LV2_NONE);
         syscalls[0x06D] = SYSCALL(sys_cond_signal_all, LV2_NONE);
         syscalls[0x06E] = SYSCALL(sys_cond_signal_to, LV2_NONE);
+        syscalls[0x06F] = SYSCALL(sys_lwcond_create, LV2_NONE);
+        syscalls[0x070] = SYSCALL(sys_lwcond_destroy, LV2_NONE);
+        syscalls[0x071] = SYSCALL(sys_lwcond_queue_wait, LV2_NONE);
         syscalls[0x072] = SYSCALL(sys_semaphore_get_value, LV2_NONE);
+        syscalls[0x073] = SYSCALL(sys_lwcond_signal, LV2_NONE);
+        syscalls[0x074] = SYSCALL(sys_lwcond_signal_all, LV2_NONE);
         syscalls[0x076] = SYSCALL(sys_event_flag_clear, LV2_NONE);
         syscalls[0x080] = SYSCALL(sys_event_queue_create, LV2_NONE);
         syscalls[0x081] = SYSCALL(sys_event_queue_destroy, LV2_NONE);
@@ -90,6 +101,52 @@ LV2::LV2(std::shared_ptr<mem::Memory> memory, U32 fw_type) : memory(std::move(me
         syscalls[0x090] = SYSCALL(sys_time_get_timezone, LV2_NONE);
         syscalls[0x091] = SYSCALL(sys_time_get_current_time, LV2_NONE);
         syscalls[0x093] = SYSCALL(sys_time_get_timebase_frequency, LV2_NONE);
+        //syscalls[0x096] = SYSCALL(sys_raw_spu_create_interrupt_tag, LV2_NONE);
+        //syscalls[0x097] = SYSCALL(sys_raw_spu_set_int_mask, LV2_NONE);
+        //syscalls[0x098] = SYSCALL(sys_raw_spu_get_int_mask, LV2_NONE);
+        //syscalls[0x099] = SYSCALL(sys_raw_spu_set_int_stat, LV2_NONE);
+        //syscalls[0x09A] = SYSCALL(sys_raw_spu_get_int_stat, LV2_NONE);
+        //syscalls[0x09B] = SYSCALL(sys_spu_image_get_information, LV2_NONE);
+        //syscalls[0x09C] = SYSCALL(sys_spu_image_open, LV2_NONE);
+        //syscalls[0x09D] = SYSCALL(sys_spu_image_import, LV2_NONE);
+        //syscalls[0x09E] = SYSCALL(sys_spu_image_close, LV2_NONE);
+        //syscalls[0x09F] = SYSCALL(sys_raw_spu_load, LV2_NONE);
+        //syscalls[0x0A0] = SYSCALL(sys_raw_spu_create, LV2_NONE);
+        //syscalls[0x0A1] = SYSCALL(sys_raw_spu_destroy, LV2_NONE);
+        //syscalls[0x0A3] = SYSCALL(sys_raw_spu_read_puint_mb, LV2_NONE);
+        //syscalls[0x0A5] = SYSCALL(sys_spu_thread_get_exit_status, LV2_NONE);
+        //syscalls[0x0A6] = SYSCALL(sys_spu_thread_set_argument, LV2_NONE);
+        //syscalls[0x0A7] = SYSCALL(sys_spu_thread_group_start_on_exit, LV2_NONE);
+        syscalls[0x0A9] = SYSCALL(sys_spu_initialize, LV2_NONE);
+        syscalls[0x0AA] = SYSCALL(sys_spu_thread_group_create, LV2_NONE);
+        syscalls[0x0AB] = SYSCALL(sys_spu_thread_group_destroy, LV2_NONE);
+        syscalls[0x0AC] = SYSCALL(sys_spu_thread_initialize, LV2_NONE);
+        syscalls[0x0AD] = SYSCALL(sys_spu_thread_group_start, LV2_NONE);
+        //syscalls[0x0AE] = SYSCALL(sys_spu_thread_group_suspend, LV2_NONE);
+        //syscalls[0x0AF] = SYSCALL(sys_spu_thread_group_resume, LV2_NONE);
+        //syscalls[0x0B0] = SYSCALL(sys_spu_thread_group_yield, LV2_NONE);
+        //syscalls[0x0B1] = SYSCALL(sys_spu_thread_group_terminate, LV2_NONE);
+        syscalls[0x0B2] = SYSCALL(sys_spu_thread_group_join, LV2_NONE);
+        //syscalls[0x0B3] = SYSCALL(sys_spu_thread_group_set_priority, LV2_NONE);
+        //syscalls[0x0B4] = SYSCALL(sys_spu_thread_group_get_priority, LV2_NONE);
+        //syscalls[0x0B5] = SYSCALL(sys_spu_thread_write_ls, LV2_NONE);
+        syscalls[0x0B6] = SYSCALL(sys_spu_thread_read_ls, LV2_NONE);
+        //syscalls[0x0B8] = SYSCALL(sys_spu_thread_write_snr, LV2_NONE);
+        syscalls[0x0B9] = SYSCALL(sys_spu_thread_group_connect_event, LV2_NONE);
+        //syscalls[0x0BA] = SYSCALL(sys_spu_thread_group_disconnect_event, LV2_NONE);
+        //syscalls[0x0BB] = SYSCALL(sys_spu_thread_set_spu_cfg, LV2_NONE);
+        //syscalls[0x0BC] = SYSCALL(sys_spu_thread_get_spu_cfg, LV2_NONE);
+        //syscalls[0x0BE] = SYSCALL(sys_spu_thread_write_spu_mb, LV2_NONE);
+        //syscalls[0x0BF] = SYSCALL(sys_spu_thread_connect_event, LV2_NONE);
+        //syscalls[0x0C0] = SYSCALL(sys_spu_thread_disconnect_event, LV2_NONE);
+        //syscalls[0x0C1] = SYSCALL(sys_spu_thread_bind_queue, LV2_NONE);
+        //syscalls[0x0C2] = SYSCALL(sys_spu_thread_unbind_queue, LV2_NONE);
+        //syscalls[0x0C4] = SYSCALL(sys_raw_spu_set_spu_cfg, LV2_NONE);
+        //syscalls[0x0C5] = SYSCALL(sys_raw_spu_get_spu_cfg, LV2_NONE);
+        //syscalls[0x0C6] = SYSCALL(sys_spu_thread_recover_page_fault, LV2_NONE);
+        //syscalls[0x0C7] = SYSCALL(sys_raw_spu_recover_page_fault, LV2_NONE);
+        syscalls[0x0FB] = SYSCALL(sys_spu_thread_group_connect_event_all_threads, LV2_NONE);
+        //syscalls[0x0FC] = SYSCALL(sys_spu_thread_group_disconnect_event_all_threads, LV2_NONE);
         syscalls[0x14A] = SYSCALL(sys_mmapper_allocate_address, LV2_NONE);
         syscalls[0x14C] = SYSCALL(sys_mmapper_allocate_shared_memory, LV2_NONE);
         syscalls[0x15C] = SYSCALL(sys_memory_allocate, LV2_NONE);
@@ -106,6 +163,7 @@ LV2::LV2(std::shared_ptr<mem::Memory> memory, U32 fw_type) : memory(std::move(me
         syscalls[0x1E4] = SYSCALL(sys_prx_register_module, LV2_NONE);
         syscalls[0x1E6] = SYSCALL(sys_prx_register_library, LV2_NONE);
         syscalls[0x1EE] = SYSCALL(sys_prx_get_module_list, LV2_NONE);
+        syscalls[0x1F0] = SYSCALL(sys_prx_get_module_id_by_name, LV2_NONE);
         syscalls[0x1FE] = SYSCALL(sys_hid_0x1FE, LV2_NONE);
         syscalls[0x200] = SYSCALL(sys_hid_0x200, LV2_NONE);
         syscalls[0x202] = SYSCALL(sys_hid_0x202, LV2_NONE);
@@ -116,11 +174,12 @@ LV2::LV2(std::shared_ptr<mem::Memory> memory, U32 fw_type) : memory(std::move(me
         syscalls[0x29C] = SYSCALL(sys_rsx_memory_allocate, LV2_NONE);
         syscalls[0x29E] = SYSCALL(sys_rsx_context_allocate, LV2_NONE);
         syscalls[0x2A0] = SYSCALL(sys_rsx_context_iomap, LV2_NONE);
+        syscalls[0x2A1] = SYSCALL(sys_rsx_context_iounmap, LV2_NONE);
         syscalls[0x2A2] = SYSCALL(sys_rsx_context_attribute, LV2_NONE);
         syscalls[0x2A3] = SYSCALL(sys_rsx_device_map, LV2_NONE);
         syscalls[0x2A5] = SYSCALL(sys_rsx_attribute, LV2_NONE);
         syscalls[0x321] = SYSCALL(sys_fs_open, LV2_NONE);
-        syscalls[0x323] = SYSCALL(sys_fs_read, LV2_NONE);
+        syscalls[0x322] = SYSCALL(sys_fs_read, LV2_NONE);
         syscalls[0x323] = SYSCALL(sys_fs_write, LV2_NONE);
         syscalls[0x324] = SYSCALL(sys_fs_close, LV2_NONE);
         syscalls[0x328] = SYSCALL(sys_fs_stat, LV2_NONE);
@@ -179,7 +238,6 @@ void LV2::call(cpu::frontend::ppu::PPUState& state) {
         logger.warning(LOG_HLE, "LV2 Syscall %d (0x%x) called", id, id);
         return;
     }
-    //printf("LV2 Syscall %d (0x%x: %s) called\n", id, id, syscalls[id].name);
     //logger.notice(LOG_HLE, "LV2 Syscall %d (0x%x: %s) called", id, id, syscalls[id].name);
     syscalls[id].func->call(state, memory->getBaseAddr());
 }

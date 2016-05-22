@@ -6,6 +6,7 @@
 #include "sys_prx.h"
 #include "nucleus/emulator.h"
 #include "nucleus/cpu/cell.h"
+#include "nucleus/cpu/frontend/ppu/ppu_decoder.h"
 #include "nucleus/core/config.h"
 #include "nucleus/system/scei/cellos/callback.h"
 #include "nucleus/system/scei/cellos/lv2.h"
@@ -132,6 +133,24 @@ S32 sys_prx_get_module_list() {
     LV2& lv2 = static_cast<LV2&>(*nucleus.sys.get());
 
     return CELL_OK;
+}
+
+S32 sys_prx_get_module_id_by_name(const S08* name, U64 flags, sys_prx_get_module_id_by_name_option_t* pOpt) {
+    LV2& lv2 = static_cast<LV2&>(*nucleus.sys.get());
+
+    if (name == nucleus.memory->ptr(0)) {
+        return 0;
+    }
+    // Find library (TODO: This is very inefficient)
+    for (const auto& object : lv2.objects) {
+        if (object.second->getType() == sys::SYS_PRX_OBJECT) {
+            const auto& prx = *(sys_prx_t*)object.second->getData();
+            if (prx.name == name) {
+                return object.first;
+            }
+        }
+    }
+    return 0;
 }
 
 S32 sys_prx_register_library(U32 lib_addr) {

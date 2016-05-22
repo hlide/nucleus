@@ -1,5 +1,5 @@
 /**
- * (c) 2015 Alexandro Sanchez Bach. All rights reserved.
+ * (c) 2014-2016 Alexandro Sanchez Bach. All rights reserved.
  * Released under GPL v2 license. Read LICENSE for more details.
  */
 
@@ -9,18 +9,35 @@
 #include "nucleus/cpu/hir/builder.h"
 #include "nucleus/cpu/hir/value.h"
 #include "nucleus/cpu/frontend/frontend_recompiler.h"
+#include "nucleus/cpu/frontend/spu/spu_decoder.h"
 #include "nucleus/cpu/frontend/spu/spu_instruction.h"
 
 namespace cpu {
+namespace frontend {
 namespace spu {
 
-class Recompiler : public frontend::IRecompiler<U32> {
-public:
+class Translator : public frontend::IRecompiler<U32> {
+private:
+    CPU* parent;
+
     // Register read
     hir::Value* getGPR(int index);
+    hir::Value* getSPR(int index);
 
     // Register write
     void setGPR(int index, hir::Value* value);
+    void setSPR(int index, hir::Value* value);
+
+public:
+    hir::Builder builder;
+
+    Translator(CPU* parent, Function* function);
+
+    void createProlog();
+    void createEpilog();
+
+    // Recompiler status
+    U32 currentAddress;
 
     /**
      * SPU Instructions:
@@ -247,4 +264,5 @@ public:
 };
 
 }  // namespace spu
+}  // namespace frontend
 }  // namespace cpu

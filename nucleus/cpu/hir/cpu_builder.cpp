@@ -111,7 +111,7 @@ Value* Builder::getConstantPointer(void* c) {
 }
 
 // HIR functions
-Function* Builder::getExternFunction(void* hostAddr) {
+Function* Builder::getExternFunction(void* hostAddr, Type typeOut, const std::vector<Type>& typeIn) {
     hir::Function* parFunction = ib->parent;
     hir::Module* parModule = parFunction->parent;
 
@@ -129,6 +129,8 @@ Function* Builder::getExternFunction(void* hostAddr) {
         externFunc = new Function(parModule, TYPE_VOID, {TYPE_I64});
     } else if (hostAddr == nucleusTime) {
         externFunc = new Function(parModule, TYPE_I64, {});
+    } else {
+        externFunc = new Function(parModule, typeOut, typeIn);
     }
 
     externFunc->flags |= FUNCTION_IS_EXTERN;
@@ -777,79 +779,167 @@ Value* Builder::createFNeg(Value* value) {
 }
 
 // Vector operations
-Value* Builder::createVAdd(Value* lhs, Value* rhs, Type compType) {
+Value* Builder::createVAdd(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
+    Instruction* i = appendInstr(OPCODE_VADD, flags, allocValue(lhs->type));
+    i->src1.setValue(lhs);
+    i->src2.setValue(rhs);
+    return i->dest;
+}
+
+Value* Builder::createVSub(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
+    Instruction* i = appendInstr(OPCODE_VSUB, flags, allocValue(lhs->type));
+    i->src1.setValue(lhs);
+    i->src2.setValue(rhs);
+    return i->dest;
+}
+
+Value* Builder::createVMul(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
+    Instruction* i = appendInstr(OPCODE_VSUB, flags, allocValue(lhs->type));
+    i->src1.setValue(lhs);
+    i->src2.setValue(rhs);
+    return i->dest;
+}
+
+Value* Builder::createVAvg(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
+    Instruction* i = appendInstr(OPCODE_VAVG, flags, allocValue(lhs->type));
+    i->src1.setValue(lhs);
+    i->src2.setValue(rhs);
+    return i->dest;
+}
+
+Value* Builder::createVAbs(Value* value, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(value);
+
+    Instruction* i = appendInstr(OPCODE_VABS, flags, allocValue(value->type));
+    i->src1.setValue(value);
+    return i->dest;
+}
+
+Value* Builder::createVCmpEQ(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
     return nullptr;
 }
 
-Value* Builder::createVSub(Value* lhs, Value* rhs, Type compType) {
+Value* Builder::createVCmpNE(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
     return nullptr;
 }
 
-Value* Builder::createVMul(Value* lhs, Value* rhs, Type compType, ArithmeticFlags flags) {
+Value* Builder::createVCmpFLT(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
     return nullptr;
 }
 
-Value* Builder::createVAvg(Value* lhs, Value* rhs, Type compType, ArithmeticFlags flags) {
+Value* Builder::createVCmpFLE(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
     return nullptr;
 }
 
-Value* Builder::createVAbs(Value* value, Type compType) {
+Value* Builder::createVCmpFGT(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
     return nullptr;
 }
 
-Value* Builder::createVCmpEQ(Value* lhs, Value* rhs, Type compType) {
+Value* Builder::createVCmpFGE(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
     return nullptr;
 }
 
-Value* Builder::createVCmpNE(Value* lhs, Value* rhs, Type compType) {
+Value* Builder::createVCmpSLT(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
     return nullptr;
 }
 
-Value* Builder::createVCmpFLT(Value* lhs, Value* rhs, Type compType) {
+Value* Builder::createVCmpSLE(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
     return nullptr;
 }
 
-Value* Builder::createVCmpFLE(Value* lhs, Value* rhs, Type compType) {
+Value* Builder::createVCmpSGT(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
     return nullptr;
 }
 
-Value* Builder::createVCmpFGT(Value* lhs, Value* rhs, Type compType) {
+Value* Builder::createVCmpSGE(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
     return nullptr;
 }
 
-Value* Builder::createVCmpFGE(Value* lhs, Value* rhs, Type compType) {
+Value* Builder::createVCmpULT(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
     return nullptr;
 }
 
-Value* Builder::createVCmpSLT(Value* lhs, Value* rhs, Type compType) {
+Value* Builder::createVCmpULE(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
     return nullptr;
 }
 
-Value* Builder::createVCmpSLE(Value* lhs, Value* rhs, Type compType) {
+Value* Builder::createVCmpUGT(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
+
     return nullptr;
 }
 
-Value* Builder::createVCmpSGT(Value* lhs, Value* rhs, Type compType) {
-    return nullptr;
-}
+Value* Builder::createVCmpUGE(Value* lhs, Value* rhs, OpcodeFlags flags) {
+    ASSERT_TYPE_VECTOR(lhs);
+    ASSERT_TYPE_VECTOR(rhs);
+    ASSERT_TYPE_EQUAL(lhs, rhs);
 
-Value* Builder::createVCmpSGE(Value* lhs, Value* rhs, Type compType) {
-    return nullptr;
-}
-
-Value* Builder::createVCmpULT(Value* lhs, Value* rhs, Type compType) {
-    return nullptr;
-}
-
-Value* Builder::createVCmpULE(Value* lhs, Value* rhs, Type compType) {
-    return nullptr;
-}
-
-Value* Builder::createVCmpUGT(Value* lhs, Value* rhs, Type compType) {
-    return nullptr;
-}
-
-Value* Builder::createVCmpUGE(Value* lhs, Value* rhs, Type compType) {
     return nullptr;
 }
 
